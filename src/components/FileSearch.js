@@ -28,7 +28,7 @@ const FileSearch = ({ title, onFileSearch }) => {
             closeSearch()
             onFileSearch('')
         }
-    }, [enterPressed, escPressed,inputActive,value])
+    }, [enterPressed, escPressed,inputActive,value,onFileSearch])
 
     useEffect(() => {
         if (inputActive) {

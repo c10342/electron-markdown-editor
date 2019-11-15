@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 
 
 import './App.css';
@@ -40,20 +40,20 @@ function App() {
   const activeFile = files.find(file => file.id === activeFileID);
 
   // 点击左侧面板文件列表项
-  const fileClick = (id) => {
+  const fileClick = useCallback((id) => {
     if (!openedFileIDs.includes(id)) {
       setOpenedFileIDs([...openedFileIDs, id]);
     }
     setActiveFileID(id)
-  }
+  }, [openedFileIDs])
 
   // 点击右侧面板上方的tablist组件的每一项
-  const tabClick = (id) => {
+  const tabClick = useCallback((id) => {
     setActiveFileID(id)
-  }
+  }, [])
 
   // 点击右侧面板上方的tablist组件的每一项的关闭图标
-  const closeTab = (id) => {
+  const closeTab = useCallback((id) => {
     const newOpenedFileIDs = openedFileIDs.filter(openedFileID => openedFileID !== id);
     setOpenedFileIDs(newOpenedFileIDs);
 
@@ -67,10 +67,10 @@ function App() {
     if (newOpenedFileIDs.length === 0) {
       setActiveFileID('');
     }
-  }
+  }, [openedFileIDs, activeFileID])
 
   // 编辑文件，文件发生变化
-  const fileChange = (id, value) => {
+  const fileChange = useCallback((id, value) => {
     if (!unsavedFileIDs.includes(id)) {
       setUnsavedFileIDs([...unsavedFileIDs, id]);
     }
@@ -84,35 +84,35 @@ function App() {
     })
 
     setFiles(newFiles)
-  }
+  }, [unsavedFileIDs, files])
 
   // 删除文件
-  const fileDelete = (id) => {
+  const fileDelete = useCallback((id) => {
     const newFiles = files.filter(file => file.id !== id);
     setFiles(newFiles);
     // 删除文件后需要关闭对应的选项卡
     closeTab(id)
-  }
+  }, [files,closeTab])
 
   // 保存修改的文件名
-  const saveEdit = (id, value) => {
+  const saveEdit = useCallback((id, value) => {
     const newFiles = files.map(file => {
       if (file.id === id) {
         file.title = value
-        if(file.isNew){  //新建文件
+        if (file.isNew) {  //新建文件
           setActiveFileID(id)
-          setOpenedFileIDs([...openedFileIDs,id])
+          setOpenedFileIDs([...openedFileIDs, id])
         }
         //如果是新建文件，保存修改的文件名则标识创建完成
-        file.isNew = false  
+        file.isNew = false
       }
       return file
     })
     setFiles(newFiles)
-  }
+  }, [files, openedFileIDs])
 
   // 搜索文件
-  const fileSearch = (value) => {
+  const fileSearch = useCallback((value) => {
     if (value) {
       const newSearchFiles = files.filter(file => file.title.includes(value))
       setSearchedFiles(newSearchFiles);
@@ -120,28 +120,27 @@ function App() {
     } else {
       setIsSearch(false)
     }
-
-  }
+  }, [files])
 
   // 新建文件
-  const createNewFile = ()=>{
+  const createNewFile = useCallback(() => {
     // 已经有文件在新建了
-    if(files.find(file=>file.isNew)){
+    if (files.find(file => file.isNew)) {
       return
     }
     const id = uuidv4()
     const newFiles = [
       ...files,
       {
-          id,
-          title: '',
-          body: '## 请输入',
-          createdAt: Date.now(),
-          isNew:true //标识是否为新建文件
+        id,
+        title: '',
+        body: '## 请输入',
+        createdAt: Date.now(),
+        isNew: true //标识是否为新建文件
       }
     ]
     setFiles(newFiles)
-  }
+  }, [files,])
 
   const fileList = isSearch ? searchedFiles : files;
 
@@ -162,7 +161,7 @@ function App() {
           <div className='row no-gutters button-group'>
             <div className='col'>
               <BottomBtn
-              onBtnClick={createNewFile}
+                onBtnClick={createNewFile}
                 text='新建'
                 icon={faPlus}
                 colorClass='btn-primary'

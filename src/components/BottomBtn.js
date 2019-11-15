@@ -1,11 +1,14 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import PropTypes from 'prop-types'
 
 const BottomBtn = ({ text, colorClass, icon, onBtnClick }) => {
+    const onClick = useCallback(() => {
+        onBtnClick && onBtnClick()
+    }, [onBtnClick])
     return (
         <button
-            onClick={() => { onBtnClick && onBtnClick() }}
+            onClick={onClick}
             type='button'
             className={`btn btn-block no-border ${colorClass}`}
         >

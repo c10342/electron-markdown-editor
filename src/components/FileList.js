@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEdit, faTrash, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { faMarkdown } from '@fortawesome/free-brands-svg-icons'
@@ -15,12 +15,12 @@ const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
         setValue('')
     }
 
-    const closeSearch = (file) => {
+    const closeSearch = useCallback((file) => {
         closeEdit()
         if (file.isNew) {
             onFileDelete(file.id)
         }
-    }
+    },[onFileDelete])
 
     const enterPressed = useKeyPress(13)
     const escPressed = useKeyPress(27)
@@ -38,7 +38,7 @@ const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
             closeSearch(createNewFiles)
         }
 
-    }, [enterPressed, escPressed, value, editStatus, files])
+    }, [enterPressed, escPressed, value, editStatus, files,closeSearch,onSaveEdit])
 
     return (
         <ul className="list-group list-group-flush">
