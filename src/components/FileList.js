@@ -1,9 +1,11 @@
-import React, { useState, useEffect,useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEdit, faTrash, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { faMarkdown } from '@fortawesome/free-brands-svg-icons'
 import PropTypes from 'prop-types'
 import useKeyPress from '../hooks/useKeyPress'
+import useContextmenu from '../hooks/useContextmenu'
+import { getParentNode } from '../utils/helper'
 
 
 const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
@@ -17,19 +19,58 @@ const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
 
     const closeSearch = useCallback((file) => {
         closeEdit()
-        if (file.isNew) {
+        if (file && file.isNew) {
             onFileDelete(file.id)
         }
-    },[onFileDelete])
+    }, [onFileDelete])
 
     const enterPressed = useKeyPress(13)
     const escPressed = useKeyPress(27)
+
+    const clickItem = useContextmenu([
+        {
+            label: '打开',
+            click: () => {
+                const parentNode = getParentNode(clickItem.current, 'file-item')
+                if (parentNode) {
+                    const id = parentNode.dataset.id
+                    onFileClick && onFileClick(id)
+                }
+            }
+        },
+        {
+            label: '删除',
+            click: () => {
+                const parentNode = getParentNode(clickItem.current, 'file-item')
+                if (parentNode) {
+                    const id = parentNode.dataset.id
+                    onFileDelete && onFileDelete(id)
+                }
+            }
+        },
+        {
+            label: '重命名',
+            click: () => {
+                const parentNode = getParentNode(clickItem.current, 'file-item')
+                if (parentNode) {
+                    const id = parentNode.dataset.id
+                    const title = parentNode.dataset.title
+                    setEditStatus(id);
+                    setValue(title)
+                }
+            }
+        }
+    ], '.file-list', [files])
 
     useEffect(() => {
         const createNewFiles = files.find(file => file.isNew)
         if (createNewFiles) {
             setEditStatus(createNewFiles.id)
         }
+    }, [files])
+
+    useEffect(() => {
+        const createNewFiles = files.find(file => file.isNew)
         if (enterPressed && editStatus && value.trim()) {
             onSaveEdit && onSaveEdit(editStatus, value)
             closeEdit()
@@ -38,16 +79,18 @@ const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
             closeSearch(createNewFiles)
         }
 
-    }, [enterPressed, escPressed, value, editStatus, files,closeSearch,onSaveEdit])
+    }, [enterPressed, escPressed, value, editStatus, files, closeSearch, onSaveEdit])
 
     return (
-        <ul className="list-group list-group-flush">
+        <ul className="list-group list-group-flush file-list">
             {
                 files.map(file => {
                     return (
                         <li
                             key={file.id}
-                            className="list-group-item bg-light row d-flex align-items-center no-gutters">
+                            data-id={file.id}
+                            data-title={file.title}
+                            className="list-group-item bg-light row d-flex align-items-center no-gutters file-item">
                             {
                                 (editStatus !== file.id) && (
                                     <>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons'
 import PropTypes from 'prop-types'
@@ -15,10 +15,11 @@ const FileSearch = ({ title, onFileSearch }) => {
     const enterPressed = useKeyPress(13)
     const escPressed = useKeyPress(27)
 
-    const closeSearch = () => {
+    const closeSearch = useCallback(() => {
         setInputActive(false)
         setValue('')
-    }
+        onFileSearch('')
+    },[onFileSearch])
 
     useEffect(() => {
         if (enterPressed && inputActive) {
@@ -28,7 +29,7 @@ const FileSearch = ({ title, onFileSearch }) => {
             closeSearch()
             onFileSearch('')
         }
-    }, [enterPressed, escPressed,inputActive,value,onFileSearch])
+    }, [enterPressed, escPressed, inputActive, value, onFileSearch,closeSearch])
 
     useEffect(() => {
         if (inputActive) {
@@ -46,10 +47,10 @@ const FileSearch = ({ title, onFileSearch }) => {
                         className='icon-button'
                         onClick={() => setInputActive(true)}
                     >
-                        <FontAwesomeIcon 
-                        title='搜索'
-                        icon={faSearch} 
-                        size='lg' />
+                        <FontAwesomeIcon
+                            title='搜索'
+                            icon={faSearch}
+                            size='lg' />
                     </button>
                 </>
             }
@@ -67,10 +68,10 @@ const FileSearch = ({ title, onFileSearch }) => {
                         className='icon-button'
                         onClick={closeSearch}
                     >
-                        <FontAwesomeIcon 
-                        title='关闭'
-                        icon={faTimes} 
-                        size='lg' />
+                        <FontAwesomeIcon
+                            title='关闭'
+                            icon={faTimes}
+                            size='lg' />
                     </button>
                 </>
             }
@@ -79,12 +80,12 @@ const FileSearch = ({ title, onFileSearch }) => {
 }
 
 FileSearch.propTypes = {
-    title:PropTypes.string,
-    onFileSearch:PropTypes.func
+    title: PropTypes.string,
+    onFileSearch: PropTypes.func
 }
 
 FileSearch.defaultProps = {
-    title:'我的云文档'
+    title: '我的云文档'
 }
 
 export default FileSearch
