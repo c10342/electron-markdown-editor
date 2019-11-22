@@ -4,6 +4,8 @@ import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons'
 import PropTypes from 'prop-types'
 import useKeyPress from '../hooks/useKeyPress'
 
+import useIpcRenderer from '../hooks/useIpcRenderer'
+
 const FileSearch = ({ title, onFileSearch }) => {
     // 是否处于搜索状态
     const [inputActive, setInputActive] = useState(false);
@@ -36,6 +38,10 @@ const FileSearch = ({ title, onFileSearch }) => {
             inputRef.current.focus()
         }
     }, [inputActive])
+    useIpcRenderer({
+        'search-file': () => setInputActive(true),
+      }, [])
+
 
     return (
         <div className='alert alert-primary d-flex justify-content-between align-items-center mb-0'>

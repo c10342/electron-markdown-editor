@@ -8,10 +8,12 @@
     "@fortawesome/free-brands-svg-icons": "^5.11.2",
     "@fortawesome/free-solid-svg-icons": "^5.11.2",
     "@fortawesome/react-fontawesome": "^0.1.7",
+    "axios": "^0.19.0",
     "bootstrap": "^4.3.1",
     "classnames": "^2.2.6",
     "electron-store": "^5.1.0",
     "prop-types": "^15.7.2",
+    "qiniu": "^7.2.2",
     "react": "^16.11.0",
     "react-dom": "^16.11.0",
     "react-scripts": "3.2.0",
@@ -23,7 +25,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dev": "concurrently \"wait-on  http://localhost:3000 && electron .\" \"cross-env BROWSER=none npm start\""
+    "restart":"nodemon --watch ./main.js --watch ./menuTemplate.js --exec \"electron .\"",
+    "dev": "concurrently \"wait-on  http://localhost:3000 && npm run restart\" \"cross-env BROWSER=none npm start\""
   },
   "eslintConfig": {
     "extends": "react-app"

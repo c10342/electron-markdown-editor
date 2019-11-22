@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo,useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 
 import './App.css';
@@ -27,10 +27,9 @@ const fs = window.require('fs')
 
 // 持久化数据
 const Store = window.require('electron-store')
-const store = new Store();
+const fileStore = new Store({name:'Files'});
 
-const localPath = remote.app.getPath('documents')
-// store.delete('files')
+const settingStore = new Store({name:'Settings'})
 
 // 持久化数据到本地
 const saveFilesToStore = (files) => {
@@ -41,10 +40,10 @@ const saveFilesToStore = (files) => {
     }
     return result
   }, {})
-  store.set('files', fileStoreObj)
+  fileStore.set('files', fileStoreObj)
 }
 
-let defaultFiles = store.get('files')
+let defaultFiles = fileStore.get('files',{})
 
 // 检查文件是否存在
 defaultFiles = Object.values(defaultFiles).reduce((result, file) => {
@@ -57,6 +56,7 @@ defaultFiles = Object.values(defaultFiles).reduce((result, file) => {
 
 
 function App() {
+  const localPath = settingStore.get('fileLocation') || remote.app.getPath('documents')
   // 文件列表
   const [files, setFiles] = useState(defaultFiles || {});
   // 正在编辑的文件id
@@ -69,16 +69,6 @@ function App() {
   const [searchedFiles, setSearchedFiles] = useState([]);
   // 是否正在搜索文件
   const [isSearch, setIsSearch] = useState(false);
-
-  // useEffect(()=>{
-  //   const callback = ()=>{
-  //     console.log('create-new-file')
-  //   }
-  //   ipcRenderer.on('create-new-file',callback)
-  //   return ()=>{
-  //     ipcRenderer.removeListener('create-new-file',callback)
-  //   }
-  // },[])
   const filesArr = useMemo(() => {
     return objToArr(files)
   }, [files])
@@ -133,7 +123,7 @@ function App() {
 
   // 编辑文件，文件发生变化
   const fileChange = useCallback((id, value) => {
-    if(files[id].body === value){
+    if (files[id].body === value) {
       return
     }
     if (!unsavedFileIDs.includes(id)) {
@@ -317,11 +307,10 @@ function App() {
 
 
   useIpcRenderer({
-    'create-new-file':createNewFile,
-    // 'save-edit-file':saveCurrentFile,
-    'save-edit-file':saveCurrentFile,
-    'import-file':importFile
-  },[createNewFile,saveCurrentFile,importFile])
+    'create-new-file': createNewFile,
+    'save-edit-file': saveCurrentFile,
+    'import-file': importFile
+  }, [createNewFile, saveCurrentFile, importFile])
 
   return (
     <div className="App container-fluid px-0">

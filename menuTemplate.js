@@ -1,5 +1,13 @@
 const { app, shell, ipcMain } = require('electron')
 
+const Store = require('electron-store')
+
+const store = new Store({ name: 'Settings' })
+
+const qiniuConfiged = ['accessKey','secretKey','bucket'].every(i=>!!store.get(i))
+
+const autoUpload = store.get('autoUpload',false)
+
 let template = [{
     label: '文件',
     submenu: [{
@@ -57,6 +65,38 @@ let template = [{
             label: '全选',
             accelerator: 'CmdOrCtrl+A',
             role: 'selectall'
+        }
+    ]
+},
+{
+    label:'云同步',
+    submenu:[
+        {
+            label:'设置',
+            accelerator: 'Ctrl+,',
+            click: () => {
+                // ipcMain继承于Event Emitter
+                ipcMain.emit('open-settings-window')
+            }
+        },
+        {
+            label:'自动同步',
+            type:'checkbox',
+            checked:autoUpload,
+            enabled:qiniuConfiged,
+            click:()=>{
+                store.set('autoUpload',!autoUpload)
+            }
+        },
+        {
+            label:'全部同步至云端',
+            enabled:qiniuConfiged,
+            click:()=>{}
+        },
+        {
+            label:'从云端下载到本地',
+            enabled:qiniuConfiged,
+            click:()=>{}
         }
     ]
 },
@@ -171,7 +211,8 @@ if (process.platform === 'darwin') {
         label: '设置',
         accelerator: 'Ctrl+,',
         click: () => {
-            // ipcMain.emit('open-settings-window')
+            // ipcMain继承于Event Emitter
+            ipcMain.emit('open-settings-window')
         }
     })
 }

@@ -7,7 +7,6 @@ import useKeyPress from '../hooks/useKeyPress'
 import useContextmenu from '../hooks/useContextmenu'
 import { getParentNode } from '../utils/helper'
 
-
 const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
     const [editStatus, setEditStatus] = useState(false);
     const [value, setValue] = useState('');
