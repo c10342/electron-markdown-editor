@@ -22,3 +22,9 @@ export const getParentNode = (node, parentClassName) => {
     }
     return false
 }
+
+// 格式化时间
+export const formartTime = (time)=>{
+    const date = new Date(time)
+    return date.toLocaleDateString()+'  '+date.toLocaleTimeString()
+}

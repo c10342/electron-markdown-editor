@@ -8,6 +8,7 @@ import FileSearch from './components/FileSearch'
 import FileList from './components/FileList';
 import BottomBtn from './components/BottomBtn'
 import TabList from './components/TabList'
+import Spinner from './components/Spinner'
 
 import { faPlus, faFileImport } from '@fortawesome/free-solid-svg-icons'
 
@@ -18,32 +19,32 @@ import uuidv4 from 'uuid/v4'
 
 import useIpcRenderer from './hooks/useIpcRenderer'
 
-import { flattenArr, objToArr } from './utils/helper'
+import { flattenArr, objToArr, formartTime } from './utils/helper'
 import FileHelper from './utils/fileHelper'
 
 const path = window.require('path')
-const { remote } = window.require('electron')
+const { remote, ipcRenderer } = window.require('electron')
 const fs = window.require('fs')
 
 // 持久化数据
 const Store = window.require('electron-store')
-const fileStore = new Store({name:'Files'});
+const fileStore = new Store({ name: 'Files' });
 
-const settingStore = new Store({name:'Settings'})
+const settingStore = new Store({ name: 'Settings' })
 
 // 持久化数据到本地
 const saveFilesToStore = (files) => {
   const fileStoreObj = objToArr(files).reduce((result, file) => {
-    const { id, path, title, createdAt } = file
+    const { id, path, title, createdAt, updateAt, isAsync } = file
     result[id] = {
-      id, path, title, createdAt
+      id, path, title, createdAt, updateAt, isAsync
     }
     return result
   }, {})
   fileStore.set('files', fileStoreObj)
 }
 
-let defaultFiles = fileStore.get('files',{})
+let defaultFiles = fileStore.get('files', {})
 
 // 检查文件是否存在
 defaultFiles = Object.values(defaultFiles).reduce((result, file) => {
@@ -52,6 +53,10 @@ defaultFiles = Object.values(defaultFiles).reduce((result, file) => {
   }
   return result
 }, {})
+
+const getAutoSync = () => {
+  return ['accessKey', 'secretKey', 'bucket', 'autoUpload'].every(i => !!settingStore.get(i))
+}
 
 
 
@@ -69,6 +74,7 @@ function App() {
   const [searchedFiles, setSearchedFiles] = useState([]);
   // 是否正在搜索文件
   const [isSearch, setIsSearch] = useState(false);
+  const [loading, setLoading] = useState(false);
   const filesArr = useMemo(() => {
     return objToArr(files)
   }, [files])
@@ -90,12 +96,17 @@ function App() {
     setActiveFileID(id)
     const currentFile = files[id]
 
-    // 已经加载过的文件不需要再次加载
-    if (!currentFile.isLoad) {
-      FileHelper.readFile(currentFile.path).then((value) => {
-        const newFile = { ...currentFile, body: value, isLoad: true }
-        setFiles({ ...files, [id]: newFile })
-      })
+    const { isLoad, title, path } = currentFile
+    if (getAutoSync()) {  // 设置了自动同步需要去七牛云检查是否是最新的文件
+      ipcRenderer.send('download-file', { key: `${title}.md`, path, id })
+    } else {
+      // 已经加载过的文件不需要再次加载
+      if (!isLoad) {
+        FileHelper.readFile(currentFile.path).then((value) => {
+          const newFile = { ...currentFile, body: value, isLoad: true }
+          setFiles({ ...files, [id]: newFile })
+        })
+      }
     }
   }, [openedFileIDs, files])
 
@@ -260,6 +271,9 @@ function App() {
       .writeFile(activeFile.path, activeFile.body)
       .then(() => {
         setUnsavedFileIDs(unsavedFileIDs.filter(i => i !== activeFileID))
+        if (getAutoSync()) {
+          ipcRenderer.send("upload-file", { key: `${activeFile.title}.md`, path: activeFile.path })
+        }
       })
   })
 
@@ -305,15 +319,58 @@ function App() {
     return isSearch ? searchedFiles : filesArr
   }, [isSearch, searchedFiles, filesArr]);
 
+  const uploadFileSuccess = useCallback(() => {
+    const { id } = activeFile
+    const modifyFile = { ...activeFile, updateAt: new Date().getTime(), isAsync: true }
+    const newFiles = { ...files, [id]: modifyFile }
+    setFiles(newFiles)
+    saveFilesToStore(newFiles)
+  }, [activeFile, files])
+
+  const downloadFile = useCallback((event, message) => {
+    const currentFile = files[message.id]
+    FileHelper.readFile(currentFile.path).then(value => {
+      let newFile;
+      if (message.status === 'download-file-success') {
+        newFile = { ...files[message.id], body: value, isLoad: true, isAsync: true, updateAt: new Date().getTime() }
+      } else {
+        newFile = { ...files[message.id], body: value, isLoad: true }
+      }
+      const newFiles = { ...files, [message.id]: newFile }
+      setFiles(newFiles)
+      saveFilesToStore(newFiles)
+    })
+  }, [files])
+
+  const uploadAllFileSuccess = useCallback(()=>{
+    const newFiles = objToArr(files).reduce((result,file)=>{
+      const currentTime = new Date().getTime()
+      result[file.id]={
+        ...files[file.id],
+        isAsync:true,
+        updateAt:currentTime
+      }
+      return result
+    },{})
+    setFiles(newFiles)
+    saveFilesToStore(newFiles)
+  },[files])
 
   useIpcRenderer({
     'create-new-file': createNewFile,
     'save-edit-file': saveCurrentFile,
-    'import-file': importFile
+    'import-file': importFile,
+    'upload-file-success': uploadFileSuccess,
+    'file-downloaded': downloadFile,
+    'loading-status':(event,status)=>setLoading(status),
+    'upload-all-file-success':uploadAllFileSuccess
   }, [createNewFile, saveCurrentFile, importFile])
 
   return (
     <div className="App container-fluid px-0">
+      {
+        loading && <Spinner />
+      }
       <div className="row no-gutters">
         <div className="col-3 left-pannel">
           <FileSearch
@@ -345,7 +402,7 @@ function App() {
             </div>
           </div>
         </div>
-        <div className="col-9 right-pannel d-flex flex-column">
+        <div className="col-9 right-pannel d-flex flex-column position-relative">
           {
             !activeFileID && (
               <div className='start-page'>
@@ -369,12 +426,11 @@ function App() {
                   onChange={(value) => { fileChange(activeFile.id, value) }}
                   value={activeFile && activeFile.body}
                 />
-                {/* <BottomBtn
-                  onBtnClick={saveCurrentFile}
-                  text='保存'
-                  icon={faPlus}
-                  colorClass='btn-primary'
-                /> */}
+                {
+                  activeFile.isAsync && (
+                    <span className='async-status'>已同步,上次更新时间是：{formartTime(activeFile.updateAt)}</span>
+                  )
+                }
               </>
             )
           }

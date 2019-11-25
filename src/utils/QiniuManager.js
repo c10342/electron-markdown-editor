@@ -102,6 +102,12 @@ class QiniuManager {
             })
     }
 
+    getFileStat(key){
+        return new Promise((resolve,reject)=>{
+            this.bucketManager.stat(this.bucket, key,this._handelCallback(resolve,reject));
+        })
+    }
+
     _handelCallback(resolve, reject) {
         return (err, respBody, respInfo) => {
             if (err) {

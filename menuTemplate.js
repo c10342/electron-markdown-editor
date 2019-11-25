@@ -91,7 +91,9 @@ let template = [{
         {
             label:'全部同步至云端',
             enabled:qiniuConfiged,
-            click:()=>{}
+            click:()=>{
+                ipcMain.emit('upload-all-file')
+            }
         },
         {
             label:'从云端下载到本地',

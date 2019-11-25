@@ -7,20 +7,20 @@ var localFile = "C:/Users/tecsun/Desktop/test/electron-vue 音视频播放器.md
 const downLoadPath = path.join(__dirname,'./name.md')
 
 const qiniu = new QiniuManager(accessKey,secretKey,'clouddocument')
-// qiniu.uploadFile(key,localFile)
-// .then(data=>{
-//     console.log(data)
-//     return qiniu.generateDownloadLink(key)
-// }).then(data=>{
-//     console.log(data)
-// }).catch(err=>{
-//     console.log(err)
-// })
-qiniu.downLoadFile(key,downLoadPath).then(data=>{
-    console.log('下载成功')
+qiniu.uploadFile(key,localFile)
+.then(data=>{
+    console.log(data)
+    return qiniu.generateDownloadLink(key)
+}).then(data=>{
+    console.log(data)
 }).catch(err=>{
     console.log(err)
 })
+// qiniu.downLoadFile(key,downLoadPath).then(data=>{
+//     console.log('下载成功')
+// }).catch(err=>{
+//     console.log(err)
+// })
 // qiniu.deleteFile(key)
 // const mac = new qiniu.auth.digest.Mac(accessKey, secretKey);
 
