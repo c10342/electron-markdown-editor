@@ -38,13 +38,13 @@ app.on('ready', () => {
     //     minWidth: 1024
     // });
 
-    const url = isDev ? "http://localhost:3000/" : "lin";
+    const url = isDev ? "http://localhost:3000/" : `file://${path.join(__dirname, './build/index.html')}`;
     mainWindow = new AppWindow({
         minHeight: 680,
         minWidth: 1024
     }, url)
 
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
 
     mainWindow.on('closed', () => {
         mainWindow = null
@@ -62,7 +62,7 @@ app.on('ready', () => {
         const url = `file://${path.join(__dirname, './settings/settings.html')}`
         settingWindow = new AppWindow(settingConfig, url)
 
-        settingWindow.webContents.openDevTools()
+        // settingWindow.webContents.openDevTools()
 
         settingWindow.removeMenu()
 
