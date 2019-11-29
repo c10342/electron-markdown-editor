@@ -2,6 +2,8 @@ const { app, Menu, ipcMain, dialog } = require('electron');
 
 const Store = require('electron-store')
 
+const {autoUpdater} = require('electron-updater')
+
 const settingStore = new Store({ name: 'Settings' })
 
 const fileStore = new Store({ name: 'Files' })
@@ -28,15 +30,59 @@ const createManager = () => {
 let mainWindow;
 let settingWindow;
 app.on('ready', () => {
-    // mainWindow = new BrowserWindow({
-    //     width: 1024,
-    //     height: 680,
-    //     webPreferences: {
-    //         nodeIntegration: true
-    //     },
-    //     minHeight: 680,
-    //     minWidth: 1024
-    // });
+    if(isDev){
+        autoUpdater.updateConfigPath = path.join(__dirname,'./dev-app-update.yml');
+    }
+
+    // 自动更新
+    autoUpdater.autoDownload = false
+    // 这个方法只能在正式环境使用
+    // autoUpdater.checkForUpdatesAndNotify()
+    // 测试环境
+    autoUpdater.checkForUpdates()
+    autoUpdater.on('error',error=>{
+        dialog.showErrorBox('Error',error == null?"unknown":error.toString())
+    })
+    autoUpdater.on('update-available',()=>{
+        dialog.showMessageBox({
+            type:'info',
+            title:'应用有新版本',
+            message:'发现新版本，是否现在更新？',
+            buttons:['是','否']
+        }).then(data=>{
+            if(data.response == 0){
+                autoUpdater.downloadUpdate()
+            }else{
+
+            }
+
+        })
+    })
+    autoUpdater.on('update-not-available',()=>{
+        dialog.showMessageBox({
+            title:'没有新版本',
+            message:'当前已经是最新版本'
+        })
+    })
+    autoUpdater.on('checking-for-update',()=>{
+        console.log('checking-for-update....')
+    })
+    autoUpdater.on('download-progress',(progressObj)=>{
+        let message = 'Download speed: '+progressObj.bytesPersecond;
+        message+='-Downloaded '+progressObj.percent+'%'
+        message+= '('+progressObj.transferred+'/'+progressObj.total+")"
+        console.log(message)
+    })
+
+    autoUpdater.on('update-downloaded',()=>{
+        console.log('update-downloaded')
+        dialog.showMessageBox({
+            title:'安装更新',
+            message:'更新下载完毕,应用将重启并安装'
+        },()=>{
+            setImmediate(()=>autoUpdater.quitAndInstall())
+        })
+    })
 
     const url = isDev ? "http://localhost:3000/" : `file://${path.join(__dirname, './build/index.html')}`;
     mainWindow = new AppWindow({

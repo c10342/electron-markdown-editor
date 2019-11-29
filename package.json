@@ -1,25 +1,15 @@
 {
   "name": "cloud-doc",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "main": "main.js",
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.2.25",
-    "@fortawesome/free-brands-svg-icons": "^5.11.2",
-    "@fortawesome/free-solid-svg-icons": "^5.11.2",
-    "@fortawesome/react-fontawesome": "^0.1.7",
-    "axios": "^0.19.0",
+    "electron-updater": "^4.2.0",
     "bootstrap": "^4.3.1",
-    "classnames": "^2.2.6",
+    "axios": "^0.19.0",
     "electron-store": "^5.1.0",
-    "prop-types": "^15.7.2",
     "qiniu": "^7.2.2",
-    "react": "^16.11.0",
-    "react-dom": "^16.11.0",
-    "react-scripts": "3.2.0",
-    "react-simplemde-editor": "^4.1.0",
-    "electron-is-dev": "^1.1.0",
-    "uuid": "^3.3.3"
+    "electron-is-dev": "^1.1.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -30,8 +20,11 @@
     "dev": "concurrently \"wait-on  http://localhost:3000 && npm run restart\" \"cross-env BROWSER=none npm start\"",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "prepack": "npm run build",
-    "predist": "npm run build"
+    "prepack": "npm run clear && npm run build",
+    "predist": "npm run clear && npm run build",
+    "clear": "rimraf dist && rimraf build",
+    "release": "cross-env GH_TOKEN= electron-builder",
+    "prerelease": "npm run clear && npm run build"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -49,11 +42,23 @@
     ]
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.25",
+    "@fortawesome/free-brands-svg-icons": "^5.11.2",
+    "@fortawesome/free-solid-svg-icons": "^5.11.2",
+    "@fortawesome/react-fontawesome": "^0.1.7",
+    "classnames": "^2.2.6",
     "concurrently": "^5.0.0",
     "cross-env": "^6.0.3",
     "electron": "^7.1.1",
     "electron-builder": "^22.1.0",
     "node-sass": "^4.13.0",
+    "prop-types": "^15.7.2",
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0",
+    "react-scripts": "3.2.0",
+    "react-simplemde-editor": "^4.1.0",
+    "rimraf": "^3.0.0",
+    "uuid": "^3.3.3",
     "wait-on": "^3.3.0"
   },
   "electronDownload": {
@@ -109,7 +114,8 @@
     },
     "win": {
       "target": [
-        "msi", "nsis"
+        "msi",
+        "nsis"
       ],
       "icon": "assets/icon.ico",
       "artifactName": "${productName}-Web-Setup-${version}.${ext}",
